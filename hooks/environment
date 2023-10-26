@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+export GEM_HOST_API_KEY="$("${BASH_SOURCE%/*}/../request-token")"
