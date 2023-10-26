@@ -1,0 +1,36 @@
+#!/usr/bin/env ruby
+
+require "json"
+require "net/http"
+require "open3"
+require "uri"
+
+host = ENV.fetch("BUILDKITE_PLUGIN_RUBYGEMS_OIDC_HOST") { ENV.fetch("RUBYGEMS_HOST", "https://rubygems.org") }
+token = ENV.fetch("BUILDKITE_PLUGIN_RUBYGEMS_OIDC_TOKEN")
+audience = ENV.fetch("BUILDKITE_PLUGIN_RUBYGEMS_OIDC_AUDIENCE", host)
+lifetime = ENV.fetch("BUILDKITE_PLUGIN_RUBYGEMS_OIDC_LIFETIME", "60")
+
+stdout, stderr, status = Open3.capture3("buildkite-agent", "oidc", "request-token", "--audience", audience, "--lifetime", lifetime)
+unless status.success?
+  raise <<~ERROR
+    Failed to request Buildkite OIDC token:
+    #{stderr}
+  ERROR
+end
+
+oidc_token = stdout.chomp
+
+uri = URI.join(host, "api/v1/oidc/api_key_roles/#{token}/assume_role")
+
+data = JSON.dump({"jwt" => oidc_token})
+
+headers = {"content-type" => "application/json"}
+
+response = Net::HTTP.post(uri, data, headers)
+
+# Raises error on non-200 response
+response.value
+
+value = JSON.parse(response.body)
+
+print value.fetch("rubygems_api_key")
