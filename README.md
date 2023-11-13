@@ -6,7 +6,7 @@ Exchange a Buildkite OIDC token for a Rubygems API token, to securely push Rubyg
 steps:
 - label: ":rubygems: Build and push to Rubygems"
   plugins:
-  - sj26/rubygems-oidc:
+  - rubygems-oidc:
       role: rg_oidc_akr_...
   command: |
     gem build "*.gem"
