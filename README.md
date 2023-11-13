@@ -1,5 +1,8 @@
 # Rubygems Buildkite OIDC support
 
+> [!NOTE]
+> This is not yet generally available, but [work is in progress](https://github.com/rubygems/rubygems.org/pull/4159).
+
 Exchange a [Buildkite OIDC token] for a [Rubygems] API token, as a [trusted provider], to securely push Rubygems from your Buildkite pipelines.
 
 ```yaml
