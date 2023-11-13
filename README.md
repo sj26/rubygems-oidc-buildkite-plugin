@@ -1,6 +1,6 @@
 # Rubygems Buildkite OIDC support
 
-Exchange a Buildkite OIDC token for a Rubygems API token, to securely push Rubygems from your Buildkite pipelines.
+Exchange a [Buildkite OIDC token] for a [Rubygems] API token, as a [trusted provider], to securely push Rubygems from your Buildkite pipelines.
 
 ```yaml
 steps:
@@ -12,6 +12,10 @@ steps:
     gem build "*.gem"
     gem push "*.gem"
 ```
+
+[Buildkite OIDC token]: https://buildkite.com/docs/agent/v3/cli-oidc
+[Rubygems]: https://rubygems.org
+[trusted provider]: https://rubygems.org/profile/oidc/providers/2
 
 ## Thanks
 
