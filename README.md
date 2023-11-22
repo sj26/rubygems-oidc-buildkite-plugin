@@ -16,7 +16,7 @@ steps:
 [Buildkite OIDC token]: https://buildkite.com/docs/agent/v3/cli-oidc
 [Rubygems]: https://rubygems.org
 [trusted provider]: https://rubygems.org/profile/oidc/providers/2
-[OIDC API Key Roles]: https://rubygems.org/profile/oidc/api_key_roles
+[OIDC API Key Role]: https://rubygems.org/profile/oidc/api_key_roles
 
 ## Thanks
 
