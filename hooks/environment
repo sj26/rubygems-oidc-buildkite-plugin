@@ -1,3 +1,61 @@
 #!/usr/bin/env bash
 
-export GEM_HOST_API_KEY="$("${BASH_SOURCE%/*}/../request-token")"
+set -euo pipefail
+
+if [ -z "${RUBYGEMS_HOST:-}" ]; then
+  RUBYGEMS_HOST="https://rubygems.org"
+fi
+
+if [ -z "${BUILDKITE_PLUGIN_RUBYGEMS_OIDC_HOST:-}" ]; then
+  BUILDKITE_PLUGIN_RUBYGEMS_OIDC_HOST="${RUBYGEMS_HOST}"
+fi
+
+if [ -z "${BUILDKITE_PLUGIN_RUBYGEMS_OIDC_ROLE:-}" ]; then
+  echo "required `role` plugin parameter not found"
+  exit 1
+fi
+
+HOST="${BUILDKITE_PLUGIN_RUBYGEMS_OIDC_HOST}"
+ROLE="${BUILDKITE_PLUGIN_RUBYGEMS_OIDC_ROLE}"
+
+if [ -z "${BUILDKITE_PLUGIN_RUBYGEMS_OIDC_AUDIENCE:-}" ]; then
+  AUDIENCE="${HOST}"
+else
+  AUDIENCE="${BUILDKITE_PLUGIN_RUBYGEMS_OIDC_AUDIENCE}"
+fi
+
+if [ -z "${BUILDKITE_PLUGIN_RUBYGEMS_OIDC_LIFETIME:-}" ]; then
+  LIFETIME="60"
+else
+  LIFETIME="${BUILDKITE_PLUGIN_RUBYGEMS_OIDC_LIFETIME}"
+fi
+
+echo "--- Request Buildkite OIDC token"
+
+export BUILDKITE_OIDC_TOKEN="$(buildkite-agent oidc request-token --audience "${AUDIENCE}" --lifetime "${LIFETIME}")"
+
+echo "--- Request Rubygems API token"
+
+REQUEST_BODY=$(jq --null-input --compact-output '{jwt: env.BUILDKITE_OIDC_TOKEN}')
+RESPONSE=$(curl -s -X POST \
+  -H "Content-Type: application/json" \
+  --data "${REQUEST_BODY}" \
+  "${HOST}/api/v1/oidc/api_key_roles/${ROLE}/assume_role")
+
+if ! jq -e . >/dev/null 2>&1 <<<"${RESPONSE}"; then
+  echo "Requesting API token failed, invalid JSON response body"
+  exit 1
+fi
+
+ERROR_MESSAGE=$(echo "${RESPONSE}" | jq -r .error)
+GEM_HOST_API_KEY==$(echo "${RESPONSE}" | jq -r .rubygems_api_key)
+
+if [ "${ERROR_MESSAGE}" != "null" ]; then
+  echo "Requesting API token failed"
+  echo "rubygems.org error: ${ERROR_MESSAGE}"
+  exit 1
+fi
+
+echo "--- Exporting GEM_HOST_API_KEY"
+
+export GEM_HOST_API_KEY
